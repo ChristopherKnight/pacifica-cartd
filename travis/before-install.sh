@@ -7,6 +7,6 @@ pip install requests
 if [ "$RUN_LINTS" = "true" ]; then
   pip install pre-commit
 else
-  python archiveinterfacepreload.py
+  python travis/archiveinterfacepreload.py
   pip install codeclimate-test-reporter coverage nose pytest
 fi

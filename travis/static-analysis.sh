@@ -1,3 +1,3 @@
 #!/bin/bash
 pylint --rcfile=pylintrc cart
-pylint --rcfile=pylintrc cartserver
+pylint --rcfile=pylintrc CartServer DatabaseCreate

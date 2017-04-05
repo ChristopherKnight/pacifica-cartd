@@ -1,7 +1,7 @@
 #!/bin/bash
 coverage run --include='cart/*' -p -m celery -A cart worker -l info &
 CELERY_PID=$!
-coverage run --include='cart/*' -p  cartserver.py --port 8081 --address 0.0.0.0 &
+coverage run --include='cart/*' -p CartServer.py --port 8081 --address 0.0.0.0 &
 SERVER_PID=$!
 coverage run --include='cart/*' -a -m pytest cart/test/cart_end_to_end_tests.py -v
 sleep 4

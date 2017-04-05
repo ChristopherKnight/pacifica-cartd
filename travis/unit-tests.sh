@@ -1,2 +1,2 @@
 #!/bin/bash
-coverage run --include='cart/*' test.py -v
+coverage run --include='cart/*' -m pytest -v cart/test
