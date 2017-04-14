@@ -145,16 +145,27 @@ class Cartutils(object):
     # Helper methods that parse the Archive Interface Responses
     #
     ###########################################################################
-    @staticmethod
-    def check_file_ready_pull(response, cart_file, mycart):
+    def check_file_ready_pull(self, response, cart_file, mycart):
         """Checks response (should be from Archive Interface head request)
         for bytes per level then returns True or False based on if the file
         is at level 1 (downloadable)"""
+        size_needed = self.check_file_size_needed(response, cart_file, mycart)
+        mod_time = self.check_file_modified_time(response, cart_file, mycart)
+        #Return from function if the values couldnt be parsed (-1 return)
+        if size_needed < 0 or mod_time < 0:
+            return -1
         try:
             decoded = json.loads(response)
             media = decoded['file_storage_media']
             if media == 'disk':
-                return True
+                #set up saving path and return dictionary
+                abs_cart_file_path = os.path.join(
+                    VOLUME_PATH, str(mycart.id), mycart.cart_uid, cart_file.bundle_path)
+                path_created = self.create_download_path(cart_file, mycart, abs_cart_file_path)
+                #Check size here and make sure enough space is available.
+                enough_space = self.check_space_requirements(cart_file, mycart, size_needed, True)
+                return {'modtime': mod_time, 'filepath': abs_cart_file_path,
+                        'path_created': path_created, 'enough_space': enough_space}
             return False
         except (ValueError, KeyError, TypeError) as ex:
             cart_file.status = 'error'
@@ -324,6 +335,7 @@ class Cartutils(object):
         cart.updated_date = datetime.datetime.now()
         cart.save()
 
+
     @classmethod
     def update_cart_files(cls, cart, file_ids):
         """Update the files associated to a cart"""
@@ -334,3 +346,58 @@ class Cartutils(object):
                     cart=cart, file_name=f_id['id'], bundle_path=filepath)
                 cart.updated_date = datetime.datetime.now()
                 cart.save()
+
+    @classmethod
+    def prepare_bundle(cls, cartid):
+        """Checks to see if all the files are staged locally
+        before calling the bundling action.  If not will call
+        itself to continue the waiting process
+        """
+        Cart.database_connect()
+        bundle_flag = True
+        for c_file in File.select().where(File.cart == cartid):
+            if c_file.status == 'error':
+                #error pulling file so set cart error and return
+                try:
+                    mycart = Cart.get(Cart.id == cartid)
+                    mycart.status = 'error'
+                    mycart.error = 'Failed to pull file(s)'
+                    mycart.updated_date = datetime.datetime.now()
+                    mycart.save()
+                    Cart.database_close()
+                    return
+                except DoesNotExist: # pragma: no cover
+                    #case if record no longer exists
+                    #creating this case in unit testing requires deletion and creation
+                    #occuring nearly simultaneously, as such cant create unit test
+                    Cart.database_close()
+                    return
+
+            elif c_file.status != 'staged':
+                bundle_flag = False
+
+        cls.tar_files(cartid, bundle_flag)
+        Cart.database_close()
+
+    @staticmethod
+    def tar_files(cartid, bundle_flag):
+        """Start to bundle all the files together
+        Due to streaming the tar we dont need to try and bundle
+        everything together"""
+
+        if bundle_flag:
+            Cart.database_connect()
+            try:
+                mycart = Cart.get(Cart.id == cartid)
+                bundle_path = os.path.join(
+                    VOLUME_PATH, str(mycart.id), (mycart.cart_uid))
+                mycart.status = 'ready'
+                mycart.bundle_path = bundle_path
+                mycart.updated_date = datetime.datetime.now()
+                mycart.save()
+            except DoesNotExist:
+                #case if record no longer exists
+                Cart.database_close()
+                return
+
+            Cart.database_close()

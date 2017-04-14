@@ -11,7 +11,7 @@ from requests.adapters import HTTPAdapter
 from cart.celery import CART_APP
 from cart.cart_orm import Cart, File
 from cart.cart_utils import Cartutils
-from cart.tasks import get_files_locally, prepare_bundle, pull_file, tar_files
+from cart.tasks import get_files_locally, pull_file, stage_files
 
 class TestCartEndToEnd(unittest.TestCase):
     """
@@ -129,7 +129,7 @@ class TestCartEndToEnd(unittest.TestCase):
         cart_utils = Cartutils()
         cart_utils.update_cart_files(mycart, file_ids)
         get_files_locally(mycart.id)
-        prepare_bundle(mycart.id)
+        cart_utils.prepare_bundle(mycart.id)
         status = mycart.status
         cartid = mycart.id
         while status == 'staging':
@@ -153,7 +153,7 @@ class TestCartEndToEnd(unittest.TestCase):
         for cart_file in File.select().where(File.cart == mycart.id):
             cart_file.status = 'error'
             cart_file.save()
-        prepare_bundle(mycart.id)
+        cart_utils.prepare_bundle(mycart.id)
         status = mycart.status
         cartid = mycart.id
         while status == 'staging':
@@ -177,11 +177,11 @@ class TestCartEndToEnd(unittest.TestCase):
         for cart_file in File.select().where(File.cart == mycart.id):
             cart_file.status = 'staging'
             cart_file.save()
-        prepare_bundle(mycart.id) #hitting more coverage, set files to staged
+        cart_utils.prepare_bundle(mycart.id) #hitting more coverage, set files to staged
         for cart_file in File.select().where(File.cart == mycart.id):
             cart_file.status = 'staged'
             cart_file.save()
-        prepare_bundle(mycart.id) #call again after file update
+        cart_utils.prepare_bundle(mycart.id) #call again after file update
         status = mycart.status
         cartid = mycart.id
         while status == 'staging':
@@ -198,7 +198,8 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_tar_invalid_cart(self):
         """test pulling a file id that doesnt exist"""
-        tar_files('8765')
+        cart_utils = Cartutils()
+        cart_utils.tar_files('8765', True)
         #no action happens on invalid cart to tar, so no assertion to check
         self.assertEqual(True, True)
 
@@ -270,3 +271,24 @@ class TestCartEndToEnd(unittest.TestCase):
 
         self.assertEqual(resp_status, 'error')
         self.assertEqual(resp_code, 500)
+
+    def test_stage_files(self):
+        """test getting bundle files ready"""
+        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt"},' +
+                          '{"id":"bar.csv", "path":"1/2/3/bar.csv"},' +
+                          '{"id":"baz.ini", "path":"2/3/4/baz.ini"}]}')
+        file_ids = data['fileids']
+        Cart.database_connect()
+        mycart = Cart(cart_uid=747, status='staging')
+        mycart.save()
+        cart_utils = Cartutils()
+        cart_utils.update_cart_files(mycart, file_ids)
+        stage_files(file_ids, mycart.id)
+        cart_utils.prepare_bundle(mycart.id)
+        status = mycart.status
+        cartid = mycart.id
+        while status == 'staging':
+            mycart = Cart.get(Cart.id == cartid)
+            status = mycart.status
+        Cart.database_close()
+        self.assertEqual(status, 'ready')

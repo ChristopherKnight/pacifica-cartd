@@ -4,28 +4,33 @@ cart infrastructure
 
 from __future__ import absolute_import
 import os
-import datetime
 import requests
 from peewee import DoesNotExist
 from cart.celery import CART_APP
 from cart.cart_orm import Cart, File
 from cart.cart_utils import Cartutils
-from cart.cart_env_globals import VOLUME_PATH
 from cart.archive_requests import ArchiveRequests
 
 
 @CART_APP.task(ignore_result=True)
-def stage_files(file_ids, uid):
-    """Tell the files to be staged on the backend system """
+def create_cart(file_ids, uid):
+    """Create the cart or update previous"""
     Cart.database_connect()
     mycart = Cart(cart_uid=uid, status='staging')
     mycart.save()
+    stage_files.delay(file_ids, mycart.id)
+    Cart.database_close()
+
+@CART_APP.task(ignore_result=True)
+def stage_files(file_ids, mycart_id):
+    """Tell the files to be staged on the backend system """
+    Cart.database_connect()
     #with update or new, need to add in files
+    mycart = Cart.get(Cart.id == mycart_id)
     cart_utils = Cartutils()
     cart_utils.update_cart_files(mycart, file_ids)
 
     get_files_locally.delay(mycart.id)
-    prepare_bundle.delay(mycart.id)
     Cart.database_close()
 
 @CART_APP.task(ignore_result=True)
@@ -37,43 +42,6 @@ def get_files_locally(cartid):
         pull_file.delay(cart_file.id, False)
     Cart.database_close()
 
-@CART_APP.task(ignore_result=True)
-def prepare_bundle(cartid):
-    """Checks to see if all the files are staged locally
-    before calling the bundling action.  If not will call
-    itself to continue the waiting process
-    """
-    Cart.database_connect()
-    bundle_flag = True
-    for c_file in File.select().where(File.cart == cartid):
-        if c_file.status == 'error':
-            #error pulling file so set cart error and return
-            try:
-                mycart = Cart.get(Cart.id == cartid)
-                mycart.status = 'error'
-                mycart.error = 'Failed to pull file(s)'
-                mycart.updated_date = datetime.datetime.now()
-                mycart.save()
-                Cart.database_close()
-                return
-            except DoesNotExist: # pragma: no cover
-                #case if record no longer exists
-                #creating this case in unit testing requires deletion and creation
-                #occuring nearly simultaneously, as such cant create unit test
-                Cart.database_close()
-                return
-
-        elif c_file.status != 'staged':
-            bundle_flag = False
-
-    if not bundle_flag:
-        #if not ready to bundle recall this task
-        prepare_bundle.delay(cartid)
-
-    else:
-        #All files are local...try to tar
-        tar_files.delay(cartid)
-    Cart.database_close()
 
 
 @CART_APP.task(ignore_result=True)
@@ -100,6 +68,7 @@ def pull_file(file_id, record_error):
         error_msg = 'Failed to stage with error: ' + str(ex)
         cart_utils.set_file_status(cart_file, mycart, 'error', error_msg)
         Cart.database_close()
+        cart_utils.prepare_bundle(mycart.id)
         return
 
     #check to see if file is available to pull from archive interface
@@ -110,77 +79,34 @@ def pull_file(file_id, record_error):
         cart_utils.set_file_status(cart_file, mycart, 'error', error_msg)
         response = 'False'
 
-    size_needed = cart_utils.check_file_size_needed(response, cart_file, mycart)
-    mod_time = cart_utils.check_file_modified_time(response, cart_file, mycart)
-    #Return from function if the values couldnt be parsed (-1 return)
-    if size_needed < 0 or mod_time < 0:
-        Cart.database_close()
-        return
-
-    ready_to_pull = cart_utils.check_file_ready_pull(
-        response, cart_file, mycart)
+    ready = cart_utils.check_file_ready_pull(response, cart_file, mycart)
 
     #Check to see if ready to pull.  If not recall this to check again
     # error on less then 0. No coverage on recall since it just calls the method again
-    if ready_to_pull < 0:
+    if ready < 0 or not ready['path_created'] or not ready['enough_space']:
         Cart.database_close()
+        cart_utils.prepare_bundle(mycart.id)
         return
-    elif not ready_to_pull: # pragma: no cover
+    elif not ready: # pragma: no cover
         pull_file.delay(file_id, False)
         Cart.database_close()
         return
 
-    #create the path the file will be downloaded to
-    abs_cart_file_path = os.path.join(
-        VOLUME_PATH, str(mycart.id), mycart.cart_uid, cart_file.bundle_path)
-    path_created = cart_utils.create_download_path(
-        cart_file, mycart, abs_cart_file_path)
-    #Check size here and make sure enough space is available.
-    enough_space = cart_utils.check_space_requirements(
-        cart_file, mycart, size_needed, True)
-
-    if path_created and enough_space:
-        try:
-            archive_request.pull_file(cart_file.file_name, abs_cart_file_path)
-            cart_utils.set_file_status(cart_file, mycart, 'staged', False)
-            Cart.database_close()
-        except requests.exceptions.RequestException as ex:
-            #if request fails...try a second time, if that fails write error
-            if record_error:
-                error_msg = 'Failed to pull with error: ' + str(ex)
-                cart_utils.set_file_status(
-
-                    cart_file, mycart, 'error', error_msg)
-                Cart.database_close()
-
-            else:
-                pull_file.delay(file_id, True)
-                Cart.database_close()
-
-        os.utime(abs_cart_file_path, (int(float(mod_time)), int(float(mod_time))))
-
-
-
-
-
-@CART_APP.task(ignore_result=True)
-def tar_files(cartid):
-    """Start to bundle all the files together
-    Due to streaming the tar we dont need to try and bundle
-    everything together"""
-
-    Cart.database_connect()
     try:
-        mycart = Cart.get(Cart.id == cartid)
-        bundle_path = os.path.join(
-            VOLUME_PATH, str(mycart.id), (mycart.cart_uid))
-        mycart.status = 'ready'
-        mycart.bundle_path = bundle_path
-        mycart.updated_date = datetime.datetime.now()
-        mycart.save()
-    except DoesNotExist:
-        #case if record no longer exists
+        archive_request.pull_file(cart_file.file_name, ready['filepath'])
+        cart_utils.set_file_status(cart_file, mycart, 'staged', False)
         Cart.database_close()
-        return
+    except requests.exceptions.RequestException as ex:
+        #if request fails...try a second time, if that fails write error
+        if record_error:
+            error_msg = 'Failed to pull with error: ' + str(ex)
+            cart_utils.set_file_status(cart_file, mycart, 'error', error_msg)
+            Cart.database_close()
+            cart_utils.prepare_bundle(mycart.id)
 
-    Cart.database_close()
+        else:
+            pull_file.delay(file_id, True)
+            Cart.database_close()
+
+    os.utime(ready['filepath'], (int(float(ready['modtime'])), int(float(ready['modtime']))))
+    cart_utils.prepare_bundle(mycart.id)

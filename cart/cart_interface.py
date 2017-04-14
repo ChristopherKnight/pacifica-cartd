@@ -8,7 +8,7 @@ from tarfile import TarFile
 import doctest
 from urlparse import parse_qs
 import cart.cart_interface_responses as cart_interface_responses
-from cart.tasks import stage_files
+from cart.tasks import create_cart
 from cart.cart_utils import Cartutils
 
 
@@ -147,7 +147,7 @@ class CartGenerator(object):
                 start_response, uid)
             return self.return_response()
 
-        stage_files(file_ids, uid)
+        create_cart(file_ids, uid)
         self._response = resp.cart_proccessing_response(start_response)
         return self.return_response()
 

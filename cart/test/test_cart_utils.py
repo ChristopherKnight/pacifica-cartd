@@ -156,6 +156,14 @@ class TestCartUtils(unittest.TestCase):
                             "message": "File was found",
                             "mtime": "1444938166"
                             }"""
+            resp_bad = """{
+                            "bytes_per_level": "(0L, 33L, 33L, 0L, 0L)",
+                            "ctime": "1444938177",
+                            "file": "/myemsl-dev/bundle/file.2",
+                            "filesize": "33",
+                            "message": "File was found",
+                            "mtime": "1444938133"
+                            }"""
             test_cart = Cart.create(cart_uid='1', status='staging')
             test_file = File.create(cart=test_cart, file_name='1.txt',
                                     bundle_path='/tmp/1/1.txt')
@@ -166,6 +174,11 @@ class TestCartUtils(unittest.TestCase):
 
             #now check for an error by sending a bad response
             ready = cart_utils.check_file_ready_pull('', test_file, test_cart)
+            self.assertEqual(ready, -1)
+            self.assertEqual(test_file.status, 'error')
+
+            #now check for an error with storage media
+            ready = cart_utils.check_file_ready_pull(resp_bad, test_file, test_cart)
             self.assertEqual(ready, -1)
             self.assertEqual(test_file.status, 'error')
 
@@ -188,7 +201,7 @@ class TestCartUtils(unittest.TestCase):
             cart_utils = Cartutils()
             ready = cart_utils.check_file_ready_pull(response, test_file,
                                                      test_cart)
-            self.assertEqual(ready, True)
+            self.assertEqual(ready['enough_space'], True)
             self.assertNotEqual(test_file.status, 'error')
 
     def test_delete_cart_bundle(self):
