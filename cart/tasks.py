@@ -93,7 +93,7 @@ def pull_file(file_id, record_error):
         return
 
     try:
-        archive_request.pull_file(cart_file.file_name, ready['filepath'])
+        archive_request.pull_file(cart_file.file_name, ready['filepath'], cart_file.hash_value, cart_file.hash_type)
         cart_utils.set_file_status(cart_file, mycart, 'staged', False)
         Cart.database_close()
     except requests.exceptions.RequestException as ex:
@@ -107,6 +107,12 @@ def pull_file(file_id, record_error):
         else:
             pull_file.delay(file_id, True)
             Cart.database_close()
+
+    except ValueError as ex:
+        error_msg = 'Failed to pull with error: ' + str(ex)
+        cart_utils.set_file_status(cart_file, mycart, 'error', error_msg)
+        Cart.database_close()
+        cart_utils.prepare_bundle(mycart.id)
 
     os.utime(ready['filepath'], (int(float(ready['modtime'])), int(float(ready['modtime']))))
     cart_utils.prepare_bundle(mycart.id)

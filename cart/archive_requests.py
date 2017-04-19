@@ -5,6 +5,7 @@ archive interface
 from __future__ import absolute_import
 from json import dumps
 import requests
+import hashlib
 from cart.cart_env_globals import  ARCHIVE_INTERFACE_URL
 
 
@@ -16,7 +17,7 @@ class ArchiveRequests(object):
     def __init__(self):
         self._url = ARCHIVE_INTERFACE_URL
 
-    def pull_file(self, archive_filename, cart_filepath):
+    def pull_file(self, archive_filename, cart_filepath, hashval, hashtype):
         """Performs a request that will attempt to write
         the contents of a file from the archive interface
         to the specified cart filepath
@@ -24,10 +25,15 @@ class ArchiveRequests(object):
         resp = requests.get(str(self._url + archive_filename), stream=True)
         myfile = open(cart_filepath, 'wb+')
         buf = resp.raw.read(1024)
+        myhash = hashlib.new(hashtype)
         while len(buf):
             myfile.write(buf)
+            myhash.update(buf)
             buf = resp.raw.read(1024)
         myfile.close()
+        myhashval = myhash.hexdigest()
+        if myhashval != hashval:
+            raise ValueError('File hash does not match provided hash')
 
     def stage_file(self, file_name):
         """Sends a post to the archive interface telling it to stage the file

@@ -103,5 +103,7 @@ class File(CartBase):
     cart = ForeignKeyField(Cart, to_field='id')
     file_name = CharField(default='')
     bundle_path = CharField(default='')
+    hash_type = CharField(null=True)
+    hash_value = CharField(null=True)
     status = TextField(default='waiting')
     error = TextField(default='')

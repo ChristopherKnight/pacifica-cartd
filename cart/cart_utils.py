@@ -342,8 +342,10 @@ class Cartutils(object):
         with Cart.atomic():
             for f_id in file_ids:
                 filepath = cls.fix_absolute_path(f_id['path'])
-                File.create(
-                    cart=cart, file_name=f_id['id'], bundle_path=filepath)
+                hashtype = f_id['hashtype']
+                hashval = f_id['hash']
+                File.create(cart=cart, file_name=f_id['id'], bundle_path=filepath,
+                            hash_type=hashtype, hash_value=hashval)
                 cart.updated_date = datetime.datetime.now()
                 cart.save()
 
