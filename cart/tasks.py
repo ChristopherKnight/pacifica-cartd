@@ -28,9 +28,14 @@ def stage_files(file_ids, mycart_id):
     #with update or new, need to add in files
     mycart = Cart.get(Cart.id == mycart_id)
     cart_utils = Cartutils()
-    cart_utils.update_cart_files(mycart, file_ids)
-
-    get_files_locally.delay(mycart.id)
+    file_id_error = cart_utils.update_cart_files(mycart, file_ids)
+    if not file_id_error:
+        get_files_locally.delay(mycart.id)
+    else:
+        mycart.status = 'error'
+        mycart.error = 'Error parsing file Ids with error: ' + str(file_id_error)
+        mycart.updated_date = datetime.datetime.now()
+        mycart.save()
     Cart.database_close()
 
 @CART_APP.task(ignore_result=True)
