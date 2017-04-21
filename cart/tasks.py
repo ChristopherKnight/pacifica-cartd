@@ -44,14 +44,11 @@ def get_files_locally(cartid):
     #tell each file to be pulled
     Cart.database_connect()
     for cart_file in File.select().where(File.cart == cartid):
-        pull_file.delay(cart_file.id, False)
+        stage_file_tasl.delay(cart_file.id)
     Cart.database_close()
 
-
-
 @CART_APP.task(ignore_result=True)
-def pull_file(file_id, record_error):
-    """Pull a file from the archive  """
+def stage_file_task(file_id):
     Cart.database_connect()
     try:
         cart_file = File.get(File.id == file_id)
@@ -64,9 +61,7 @@ def pull_file(file_id, record_error):
     except DoesNotExist:
         Cart.database_close()
         return
-
     archive_request = ArchiveRequests()
-    #stage the file on the archive.  True on success, False on fail
     try:
         archive_request.stage_file(cart_file.file_name)
     except requests.exceptions.RequestException as ex:
@@ -75,14 +70,33 @@ def pull_file(file_id, record_error):
         Cart.database_close()
         cart_utils.prepare_bundle(mycart.id)
         return
+    #successful stage so move on to status
+    Cart.database_close()
+    status_file_task.delay(file_id)
 
+@CART_APP.task(ignore_result=True)
+def status_file_task(file_id):
+    Cart.database_connect()
+    try:
+        cart_file = File.get(File.id == file_id)
+        mycart = cart_file.cart
+        cart_utils = Cartutils()
+        #make sure cart wasnt deleted before pulling file
+        if mycart.deleted_date:
+            return
+    except DoesNotExist:
+        Cart.database_close()
+        return
     #check to see if file is available to pull from archive interface
+    archive_request = ArchiveRequests()
     try:
         response = archive_request.status_file(cart_file.file_name)
     except requests.exceptions.RequestException as ex:
         error_msg = 'Failed to status file with error: ' + str(ex)
         cart_utils.set_file_status(cart_file, mycart, 'error', error_msg)
-        response = 'False'
+        Cart.database_close()
+        cart_utils.prepare_bundle(mycart.id)
+        return
 
     ready = cart_utils.check_file_ready_pull(response, cart_file, mycart)
 
@@ -93,12 +107,30 @@ def pull_file(file_id, record_error):
         cart_utils.prepare_bundle(mycart.id)
         return
     elif not ready: # pragma: no cover
-        pull_file.delay(file_id, False)
+        Cart.database_close()
+        status_file_task.delay(file_id)
+        return
+    #ready so try to pull file
+    pull_file.delay(file_id, ready['filepath'], ready['modtime'], False)
+
+@CART_APP.task(ignore_result=True)
+def pull_file(file_id, filepath, modtime, record_error):
+    """Pull a file from the archive  """
+    Cart.database_connect()
+    try:
+        cart_file = File.get(File.id == file_id)
+        mycart = cart_file.cart
+        cart_utils = Cartutils()
+        #make sure cart wasnt deleted before pulling file
+        if mycart.deleted_date:
+            return
+    except DoesNotExist:
         Cart.database_close()
         return
 
+    archive_request = ArchiveRequests()
     try:
-        archive_request.pull_file(cart_file.file_name, ready['filepath'], cart_file.hash_value, cart_file.hash_type)
+        archive_request.pull_file(cart_file.file_name, filepath, cart_file.hash_value, cart_file.hash_type)
         cart_utils.set_file_status(cart_file, mycart, 'staged', False)
         Cart.database_close()
     except requests.exceptions.RequestException as ex:
@@ -110,7 +142,7 @@ def pull_file(file_id, record_error):
             cart_utils.prepare_bundle(mycart.id)
 
         else:
-            pull_file.delay(file_id, True)
+            pull_file.delay(file_id, filepath, modtime, True)
             Cart.database_close()
 
     except ValueError as ex:
@@ -119,5 +151,5 @@ def pull_file(file_id, record_error):
         Cart.database_close()
         cart_utils.prepare_bundle(mycart.id)
 
-    os.utime(ready['filepath'], (int(float(ready['modtime'])), int(float(ready['modtime']))))
+    os.utime(filepath, (int(float(modtime)), int(float(modtime))))
     cart_utils.prepare_bundle(mycart.id)
