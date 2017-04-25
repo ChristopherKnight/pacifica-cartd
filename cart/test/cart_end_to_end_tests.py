@@ -24,9 +24,9 @@ class TestCartEndToEnd(unittest.TestCase):
     def test_post_cart(self, cart_id='36'):
         """test the creation of a cart"""
         with open('/tmp/cart.json', 'a') as cartfile:
-            cartfile.write('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt"},' +
-                           '{"id":"bar.csv", "path":"1/2/3/bar.csv"},' +
-                           '{"id":"baz.ini", "path":"2/3/4/baz.ini"}]}')
+            cartfile.write('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5", "hashsum":""},' +
+                           '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5", "hashsum":""},' +
+                           '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5", "hashsum":""}]}')
 
         session = requests.Session()
         retries = Retry(total=5, backoff_factor=5.0)
@@ -119,9 +119,9 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_prepare_bundle(self):
         """test getting bundle files ready"""
-        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt"},' +
-                          '{"id":"bar.csv", "path":"1/2/3/bar.csv"},' +
-                          '{"id":"baz.ini", "path":"2/3/4/baz.ini"}]}')
+        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5", "hashsum":""},' +
+                          '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5", "hashsum":""},' +
+                          '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5", "hashsum":""}]}')
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=117, status='staging')
@@ -140,9 +140,9 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_prep_bundle_error(self):
         """test getting bundle ready with a file in error state"""
-        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt"},' +
-                          '{"id":"bar.csv", "path":"1/2/3/bar.csv"},' +
-                          '{"id":"baz.ini", "path":"2/3/4/baz.ini"}]}')
+        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5", "hashsum":""},' +
+                          '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5", "hashsum":""},' +
+                          '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5", "hashsum":""}]}')
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=343, status='staging')
@@ -164,9 +164,9 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_prep_bundle_staging(self):
         """test getting bundle ready with a file in staging state"""
-        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt"},' +
-                          '{"id":"bar.csv", "path":"1/2/3/bar.csv"},' +
-                          '{"id":"baz.ini", "path":"2/3/4/baz.ini"}]}')
+        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5", "hashsum":""},' +
+                          '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5", "hashsum":""},' +
+                          '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5", "hashsum":""}]}')
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=343, status='staging')
@@ -205,9 +205,9 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_cart_deleted_date(self):
         """test getting bundle ready with a file in staging state"""
-        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt"},' +
-                          '{"id":"bar.csv", "path":"1/2/3/bar.csv"},' +
-                          '{"id":"baz.ini", "path":"2/3/4/baz.ini"}]}')
+        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5", "hashsum":""},' +
+                          '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5", "hashsum":""},' +
+                          '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5", "hashsum":""}]}')
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=444, status='staging')
@@ -244,7 +244,7 @@ class TestCartEndToEnd(unittest.TestCase):
         """test the status of a cart with error"""
         cart_id = '98'
         with open('/tmp/cart.json', 'a') as cartfile:
-            cartfile.write('{"fileids": [{"id":"mytest.txt", "path":"1/2/3/mytest.txt"}]}')
+            cartfile.write('{"fileids": [{"id":"mytest.txt", "path":"1/2/3/mytest.txt", "hashtype":"md5", "hashsum":""}]}')
 
         session = requests.Session()
         retries = Retry(total=5, backoff_factor=5.0)
@@ -274,9 +274,9 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_stage_files(self):
         """test getting bundle files ready"""
-        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt"},' +
-                          '{"id":"bar.csv", "path":"1/2/3/bar.csv"},' +
-                          '{"id":"baz.ini", "path":"2/3/4/baz.ini"}]}')
+        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5", "hashsum":""},' +
+                          '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5", "hashsum":""},' +
+                          '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5", "hashsum":""}]}')
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=747, status='staging')

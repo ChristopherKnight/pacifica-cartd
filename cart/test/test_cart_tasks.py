@@ -9,7 +9,7 @@ import requests
 from playhouse.test_utils import test_database
 from peewee import SqliteDatabase
 from cart.cart_orm import Cart, File
-from cart.tasks import pull_file, stage_file_task, status_file_task
+from cart.tasks import stage_file_task, status_file_task
 from cart.archive_requests import ArchiveRequests
 from cart.cart_utils import Cartutils
 import cart.cart_orm
