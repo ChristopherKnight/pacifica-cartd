@@ -63,12 +63,16 @@ id =  the id being used on the Archive
 
 path = internal structure of bundle for file placement
 
+hashtype = hashlib hashtype used to generate hashsum
+
+hashsum = the hash (hex value) of the file using the hashtype listed
+
 ```
 {
   "fileids": [
-    {"id":"foo.txt", "path":"1/2/3/foo.txt"},
-    {"id":"bar.csv", "path":"1/2/3/bar.csv"},
-    {"id":"baz.ini", "path":"2/3/4/baz.ini"}
+    {"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5", "hashsum":""},
+    {"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5", "hashsum":""},
+    {"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5", "hashsum":""}
   ]
 }
 ```

@@ -192,7 +192,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_pull_invalid_file(self):
         """test pulling a file id that doesnt exist"""
-        pull_file('8765', False)
+        pull_file('8765', 'some/bad/path', '1111', False)
         #no action happens on invalid file, so no assertion to check
         self.assertEqual(True, True)
 
@@ -220,7 +220,7 @@ class TestCartEndToEnd(unittest.TestCase):
         mycart.save()
         status = mycart.status
         for cart_file in File.select().where(File.cart == mycart.id):
-            pull_file(cart_file.id, False)
+            pull_file(cart_file.id, '/tmp/some/Path', '1111', False)
         Cart.database_close()
         self.assertEqual(status, 'deleted')
 

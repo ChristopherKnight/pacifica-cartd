@@ -4,8 +4,8 @@ archive interface
 
 from __future__ import absolute_import
 from json import dumps
-import requests
 import hashlib
+import requests
 from cart.cart_env_globals import  ARCHIVE_INTERFACE_URL
 
 
@@ -26,7 +26,7 @@ class ArchiveRequests(object):
         myfile = open(cart_filepath, 'wb+')
         buf = resp.raw.read(1024)
         myhash = hashlib.new(hashtype)
-        while len(buf):
+        while buf:
             myfile.write(buf)
             myhash.update(buf)
             buf = resp.raw.read(1024)

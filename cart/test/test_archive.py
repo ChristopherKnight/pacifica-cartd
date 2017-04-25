@@ -21,15 +21,15 @@ class TestArchiveRequests(unittest.TestCase):
         """
         Test pulling a file
         """
-        response_body = """
-        This is the body of the file in the archive.
-        """
+        response_body = "This is the body of the file in the archive."
         httpretty.register_uri(httpretty.GET, '%s/1'%(self.endpoint_url),
                                body=response_body,
                                content_type='application/octet-stream')
         temp_dir = mkdtemp()
         archreq = ArchiveRequests()
-        archreq.pull_file('1', '%s/1'%(temp_dir))
+        hashval = '5bf018b3c598df19b5f4363fc55f2f89'
+        hashtype = 'md5'
+        archreq.pull_file('1', '%s/1'%(temp_dir), hashval, hashtype)
         testfd = open('%s/1'%(temp_dir), 'r')
         self.assertEqual(testfd.read(), response_body)
 

@@ -9,7 +9,7 @@ import requests
 from playhouse.test_utils import test_database
 from peewee import SqliteDatabase
 from cart.cart_orm import Cart, File
-from cart.tasks import pull_file
+from cart.tasks import pull_file, stage_file_task, status_file_task
 from cart.archive_requests import ArchiveRequests
 from cart.cart_utils import Cartutils
 import cart.cart_orm
@@ -37,7 +37,7 @@ class TestCartTasks(unittest.TestCase):
             cart.cart_orm.CartBase.throw_error = False
             mock_stage_file.side_effect = requests.exceptions.RequestException(mock.Mock(status=500), 'Error')
             file_id = test_file.id
-            pull_file(file_id, False)
+            stage_file_task(file_id)
             cart_file = File.get(File.id == file_id)
             status = cart_file.status
             self.assertEqual(status, 'error')
@@ -63,7 +63,7 @@ class TestCartTasks(unittest.TestCase):
             mock_stage_file.return_value = True
             mock_status_file.side_effect = requests.exceptions.RequestException(mock.Mock(status=500), 'Error')
             file_id = test_file.id
-            pull_file(file_id, False)
+            status_file_task(file_id)
             cart_file = File.get(File.id == file_id)
             status = cart_file.status
             self.assertEqual(status, 'error')
@@ -101,7 +101,7 @@ class TestCartTasks(unittest.TestCase):
             mock_pull_file.side_effect = requests.exceptions.RequestException(mock.Mock(status=500), 'Error')
             mock_utime.return_value = True
             file_id = test_file.id
-            pull_file(file_id, False)
+            stage_file_task(file_id)
             cart_file = File.get(File.id == file_id)
             status = cart_file.status
             self.assertEqual(status, 'error')
@@ -137,7 +137,7 @@ class TestCartTasks(unittest.TestCase):
                             }"""
             mock_check_file.return_value = -1
             file_id = test_file.id
-            pull_file(file_id, False)
+            stage_file_task(file_id)
             cart_file = File.get(File.id == file_id)
             status = cart_file.status
             self.assertEqual(status, 'staging')
@@ -173,7 +173,7 @@ class TestCartTasks(unittest.TestCase):
                             }"""
             mock_check_file.return_value = -1
             file_id = test_file.id
-            pull_file(file_id, False)
+            stage_file_task(file_id)
             cart_file = File.get(File.id == file_id)
             status = cart_file.status
             self.assertEqual(status, 'staging')

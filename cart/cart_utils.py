@@ -225,8 +225,7 @@ class Cartutils(object):
             return 'Cart Deleted Successfully'
         elif deleted_flag:
             return False #already deleted
-        else:
-            return None #unknown error
+        return None #unknown error
 
     @staticmethod
     def delete_cart_bundle(cart):

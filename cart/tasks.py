@@ -4,6 +4,7 @@ cart infrastructure
 
 from __future__ import absolute_import
 import os
+import datetime
 import requests
 from peewee import DoesNotExist
 from cart.celery import CART_APP
@@ -44,11 +45,12 @@ def get_files_locally(cartid):
     #tell each file to be pulled
     Cart.database_connect()
     for cart_file in File.select().where(File.cart == cartid):
-        stage_file_tasl.delay(cart_file.id)
+        stage_file_task.delay(cart_file.id)
     Cart.database_close()
 
 @CART_APP.task(ignore_result=True)
 def stage_file_task(file_id):
+    """Stage the file from the archive, then call status """
     Cart.database_connect()
     try:
         cart_file = File.get(File.id == file_id)
@@ -76,6 +78,7 @@ def stage_file_task(file_id):
 
 @CART_APP.task(ignore_result=True)
 def status_file_task(file_id):
+    """Status a file from the archive. If ready then pull the file"""
     Cart.database_connect()
     try:
         cart_file = File.get(File.id == file_id)
