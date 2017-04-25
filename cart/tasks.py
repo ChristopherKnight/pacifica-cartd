@@ -80,11 +80,15 @@ def stage_file_task(file_id):
 def status_file_task(file_id):
     """Status a file from the archive. If ready then pull the file"""
     Cart.database_connect()
-    cart_file = File.get(File.id == file_id)
-    mycart = cart_file.cart
-    cart_utils = Cartutils()
-    #make sure cart wasnt deleted before pulling file
-    if mycart.deleted_date:
+    try:
+        cart_file = File.get(File.id == file_id)
+        mycart = cart_file.cart
+        cart_utils = Cartutils()
+        #make sure cart wasnt deleted before pulling file
+        if mycart.deleted_date:
+            return
+    except DoesNotExist:
+        Cart.database_close()
         return
 
     #check to see if file is available to pull from archive interface
@@ -102,7 +106,7 @@ def status_file_task(file_id):
 
     #Check to see if ready to pull.  If not recall this to check again
     # error on less then 0. No coverage on recall since it just calls the method again
-    if ready < 0 or not ready['path_created'] or not ready['enough_space']:
+    if ready < 0:
         Cart.database_close()
         cart_utils.prepare_bundle(mycart.id)
         return

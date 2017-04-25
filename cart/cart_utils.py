@@ -164,8 +164,10 @@ class Cartutils(object):
                 path_created = self.create_download_path(cart_file, mycart, abs_cart_file_path)
                 #Check size here and make sure enough space is available.
                 enough_space = self.check_space_requirements(cart_file, mycart, size_needed, True)
-                return {'modtime': mod_time, 'filepath': abs_cart_file_path,
-                        'path_created': path_created, 'enough_space': enough_space}
+                if path_created and enough_space:
+                    return {'modtime': mod_time, 'filepath': abs_cart_file_path,
+                            'path_created': path_created, 'enough_space': enough_space}
+                else return -1
             return False
         except (ValueError, KeyError, TypeError) as ex:
             cart_file.status = 'error'
