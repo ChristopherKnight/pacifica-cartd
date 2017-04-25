@@ -151,25 +151,13 @@ class Cartutils(object):
         is at level 1 (downloadable)"""
         size_needed = self.check_file_size_needed(response, cart_file, mycart)
         mod_time = self.check_file_modified_time(response, cart_file, mycart)
-        #Return from function if the values couldnt be parsed (-1 return)
-        if size_needed < 0 or mod_time < 0:
-            return -1
         try:
             decoded = json.loads(response)
             media = decoded['file_storage_media']
-            if media == 'disk':
-                #set up saving path and return dictionary
-                abs_cart_file_path = os.path.join(
-                    VOLUME_PATH, str(mycart.id), mycart.cart_uid, cart_file.bundle_path)
-                path_created = self.create_download_path(cart_file, mycart, abs_cart_file_path)
-                #Check size here and make sure enough space is available.
-                enough_space = self.check_space_requirements(cart_file, mycart, size_needed, True)
-                if path_created and enough_space:
-                    return {'modtime': mod_time, 'filepath': abs_cart_file_path,
-                            'path_created': path_created, 'enough_space': enough_space}
-                else: 
-                    return -1
-            return False
+            if media == 'disk':         
+                return self.check_status_details(mycart, cart_file, size_needed, mod_time)
+            else:
+                return False
         except (ValueError, KeyError, TypeError) as ex:
             cart_file.status = 'error'
             cart_file.error = """Failed to decode json for file status
@@ -178,6 +166,24 @@ class Cartutils(object):
             cart_file.save()
             mycart.updated_date = datetime.datetime.now()
             mycart.save()
+            return -1
+
+    def check_status_details(self, mycart, cart_file, size_needed, mod_time):
+        """Checks to see if data from the status response is all correct and
+        ready to for the file to be pulled"""
+        #Return from function if the values couldnt be parsed (-1 return)
+        if size_needed < 0 or mod_time < 0:
+            return -1
+        #set up saving path and return dictionary
+        abs_cart_file_path = os.path.join(
+            VOLUME_PATH, str(mycart.id), mycart.cart_uid, cart_file.bundle_path)
+        path_created = self.create_download_path(cart_file, mycart, abs_cart_file_path)
+        #Check size here and make sure enough space is available.
+        enough_space = self.check_space_requirements(cart_file, mycart, size_needed, True)
+        if path_created and enough_space:
+            return {'modtime': mod_time, 'filepath': abs_cart_file_path,
+                    'path_created': path_created, 'enough_space': enough_space}
+        else: 
             return -1
 
     @staticmethod

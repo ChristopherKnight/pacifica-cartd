@@ -80,15 +80,11 @@ def stage_file_task(file_id):
 def status_file_task(file_id):
     """Status a file from the archive. If ready then pull the file"""
     Cart.database_connect()
-    try:
-        cart_file = File.get(File.id == file_id)
-        mycart = cart_file.cart
-        cart_utils = Cartutils()
-        #make sure cart wasnt deleted before pulling file
-        if mycart.deleted_date:
-            return
-    except DoesNotExist:
-        Cart.database_close()
+    cart_file = File.get(File.id == file_id)
+    mycart = cart_file.cart
+    cart_utils = Cartutils()
+    #make sure cart wasnt deleted before pulling file
+    if mycart.deleted_date:
         return
 
     #check to see if file is available to pull from archive interface
