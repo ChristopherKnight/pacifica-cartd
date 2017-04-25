@@ -167,7 +167,7 @@ class Cartutils(object):
                 if path_created and enough_space:
                     return {'modtime': mod_time, 'filepath': abs_cart_file_path,
                             'path_created': path_created, 'enough_space': enough_space}
-                else 
+                else: 
                     return -1
             return False
         except (ValueError, KeyError, TypeError) as ex:
