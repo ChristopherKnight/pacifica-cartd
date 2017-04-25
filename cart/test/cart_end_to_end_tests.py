@@ -53,6 +53,8 @@ class TestCartEndToEnd(unittest.TestCase):
             resp_code = resp.status_code
             if resp_code == 204 and resp_status != 'staging':
                 break
+            if resp_code == 500:
+                break
             time.sleep(2)
 
         self.assertEqual(resp_status, 'ready')
@@ -244,7 +246,8 @@ class TestCartEndToEnd(unittest.TestCase):
         """test the status of a cart with error"""
         cart_id = '98'
         with open('/tmp/cart.json', 'a') as cartfile:
-            cartfile.write('{"fileids": [{"id":"mytest.txt", "path":"1/2/3/mytest.txt", "hashtype":"md5", "hashsum":""}]}')
+            cartfile.write('{"fileids": [{"id":"mytest.txt", "path":"1/2/3/mytest.txt",' +
+                           '"hashtype":"md5", "hashsum":""}]}')
 
         session = requests.Session()
         retries = Retry(total=5, backoff_factor=5.0)
