@@ -29,10 +29,10 @@ if DATABASE_LOGGING:
     LOGGER.addHandler(logging.StreamHandler())
 
 #Number of attempts to connect to database.  Default 3
-DATABASE_CONNECT_ATTEMPTS = os.getenv('DATABASE_CONNECT_ATTEMPTS', 3)
+DATABASE_CONNECT_ATTEMPTS = os.getenv('DATABASE_CONNECT_ATTEMPTS', 10)
 
 #time between trying to reconnect to database.  Default 10 seconds
-DATABASE_WAIT = os.getenv('DATABASE_WAIT', 10)
+DATABASE_WAIT = os.getenv('DATABASE_WAIT', 20)
 
 #amqp addr and port variables
 AMQP_USER = os.getenv('AMQP_USER', 'guest')

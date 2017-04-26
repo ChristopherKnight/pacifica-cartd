@@ -154,10 +154,9 @@ class Cartutils(object):
         try:
             decoded = json.loads(response)
             media = decoded['file_storage_media']
-            if media == 'disk':         
+            if media == 'disk':
                 return self.check_status_details(mycart, cart_file, size_needed, mod_time)
-            else:
-                return False
+            return False
         except (ValueError, KeyError, TypeError) as ex:
             cart_file.status = 'error'
             cart_file.error = """Failed to decode json for file status
@@ -183,8 +182,7 @@ class Cartutils(object):
         if path_created and enough_space:
             return {'modtime': mod_time, 'filepath': abs_cart_file_path,
                     'path_created': path_created, 'enough_space': enough_space}
-        else: 
-            return -1
+        return -1
 
     @staticmethod
     def check_file_modified_time(response, cart_file, mycart):
