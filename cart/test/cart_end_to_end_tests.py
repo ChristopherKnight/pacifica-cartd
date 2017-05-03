@@ -56,7 +56,7 @@ class TestCartEndToEnd(unittest.TestCase):
             resp_code = resp.status_code
             if resp_code == 204 and resp_status != 'staging':
                 break
-            if resp_code == 500:
+            if resp_code == 500: # pragma: no cover
                 break
             time.sleep(2)
 
@@ -313,3 +313,36 @@ class TestCartEndToEnd(unittest.TestCase):
             status = mycart.status
         Cart.database_close()
         self.assertEqual(status, 'ready')
+
+    def test_post_cart_bad_hash(self, cart_id='1136'):
+        """test the creation of a cart with bad hash"""
+        with open('/tmp/cart.json', 'a') as cartfile:
+            cartfile.write('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
+                           ' "hashsum":"ac59bb32"},' +
+                           '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
+                           ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
+                           '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
+                           ' "hashsum":"b0c21625a5ef364864191e5907d7afb4"}]}')
+
+        session = requests.Session()
+        retries = Retry(total=5, backoff_factor=5.0)
+        session.mount('http://', HTTPAdapter(max_retries=retries))
+
+        resp = session.post('http://127.0.0.1:8081/' + cart_id, data=open('/tmp/cart.json', 'rb'))
+        os.remove('/tmp/cart.json')
+        data = json.loads(resp.text)
+        self.assertEqual(os.path.isfile('/tmp/cart.json'), False)
+        self.assertEqual(data['message'], 'Cart Processing has begun')
+
+        while True:
+            resp = session.head('http://127.0.0.1:8081/' + cart_id)
+            resp_status = resp.headers['X-Pacifica-Status']
+            resp_message = resp.headers['X-Pacifica-Message']
+            resp_code = resp.status_code
+            if resp_code == 204 and resp_status != 'staging':
+                break
+            if resp_code == 500:
+                break
+            time.sleep(2)
+
+        self.assertEqual(resp_status, 'error')
