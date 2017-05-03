@@ -122,7 +122,7 @@ class TestCartEndToEnd(unittest.TestCase):
     def test_prepare_bundle(self):
         """test getting bundle files ready"""
         data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
-                          ' "hashsum":"ac59bb32dac43267dd6e620a6b35ff3"},' +
+                          ' "hashsum":"ac59bb32dac432674dd6e620a6b35ff3"},' +
                           '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
                           ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
                           '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
@@ -146,7 +146,7 @@ class TestCartEndToEnd(unittest.TestCase):
     def test_prep_bundle_error(self):
         """test getting bundle ready with a file in error state"""
         data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
-                          ' "hashsum":"ac59bb32dac43267dd6e620a6b35ff3"},' +
+                          ' "hashsum":"ac59bb32dac432674dd6e620a6b35ff3"},' +
                           '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
                           ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
                           '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
@@ -173,7 +173,7 @@ class TestCartEndToEnd(unittest.TestCase):
     def test_prep_bundle_staging(self):
         """test getting bundle ready with a file in staging state"""
         data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
-                          ' "hashsum":"ac59bb32dac43267dd6e620a6b35ff3"},' +
+                          ' "hashsum":"ac59bb32dac432674dd6e620a6b35ff3"},' +
                           '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
                           ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
                           '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
@@ -217,7 +217,7 @@ class TestCartEndToEnd(unittest.TestCase):
     def test_cart_deleted_date(self):
         """test getting bundle ready with a file in staging state"""
         data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
-                          ' "hashsum":"ac59bb32dac43267dd6e620a6b35ff3"},' +
+                          ' "hashsum":"ac59bb32dac432674dd6e620a6b35ff3"},' +
                           '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
                           ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
                           '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
@@ -290,7 +290,7 @@ class TestCartEndToEnd(unittest.TestCase):
     def test_stage_files(self):
         """test getting bundle files ready"""
         data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
-                          ' "hashsum":"ac59bb32dac43267dd6e620a6b35ff3"},' +
+                          ' "hashsum":"ac59bb32dac432674dd6e620a6b35ff3"},' +
                           '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
                           ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
                           '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +

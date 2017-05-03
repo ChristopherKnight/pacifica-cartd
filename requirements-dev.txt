@@ -6,6 +6,6 @@ MySQL-python
 peewee
 pre-commit
 psutil
-pylint
+pylint 1.6.3
 pytest
 requests

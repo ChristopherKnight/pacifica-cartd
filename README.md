@@ -87,7 +87,7 @@ curl -X POST --upload-file /tmp/foo.json http://127.0.0.1:8081/$MY_CART_UUID
 Head on the cart to find whether its created and ready for download.
 
 ```
-curl -X HEAD http://127.0.0.1:8081/$MY_CART_UUID
+curl -I -X HEAD http://127.0.0.1:8081/$MY_CART_UUID
 ```
 
 Will receive headers back with the specific data needed. These are:
