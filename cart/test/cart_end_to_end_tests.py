@@ -24,9 +24,12 @@ class TestCartEndToEnd(unittest.TestCase):
     def test_post_cart(self, cart_id='36'):
         """test the creation of a cart"""
         with open('/tmp/cart.json', 'a') as cartfile:
-            cartfile.write('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5", "hashsum":""},' +
-                           '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5", "hashsum":""},' +
-                           '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5", "hashsum":""}]}')
+            cartfile.write('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
+                           ' "hashsum":"ac59bb32dac432674dd6e620a6b35ff3"},' +
+                           '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
+                           ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
+                           '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
+                           ' "hashsum":"b0c21625a5ef364864191e5907d7afb4"}]}')
 
         session = requests.Session()
         retries = Retry(total=5, backoff_factor=5.0)
