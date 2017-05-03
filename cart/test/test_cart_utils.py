@@ -7,6 +7,7 @@ from types import MethodType
 import shutil
 import mock
 import psutil
+import json
 from playhouse.test_utils import test_database
 from peewee import SqliteDatabase
 from cart.cart_orm import Cart, File
@@ -266,8 +267,6 @@ class TestCartUtils(unittest.TestCase):
 
             test_cart = Cart.create(cart_uid='1', status='staging',
                                     bundle_path='/tmp/1/')
-            test_file = File.create(cart=test_cart, file_name='1.txt',
-                                    bundle_path='/tmp/1/1.txt')
             cart_utils = Cartutils()
 
             data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
