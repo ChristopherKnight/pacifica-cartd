@@ -355,7 +355,7 @@ class Cartutils(object):
                                 hash_type=hashtype, hash_value=hashval)
                     cart.updated_date = datetime.datetime.now()
                     cart.save()
-                except NameError, KeyError as ex:
+                except (NameError, KeyError) as ex:
                     return ex #return error so that the cart can be updated
             return None
 
