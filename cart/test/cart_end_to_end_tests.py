@@ -13,14 +13,14 @@ from cart.cart_orm import Cart, File
 from cart.cart_utils import Cartutils
 from cart.tasks import get_files_locally, pull_file, stage_files
 
-def cart_json_helper(self):
+def cart_json_helper():
         """Helper that returns a cart json text string"""
-        return ('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
-                ' "hashsum":"ac59bb32dac432674dd6e620a6b35ff3"},' +
-                '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
-                ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
-                '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
-                ' "hashsum":"b0c21625a5ef364864191e5907d7afb4"}]}')
+    return ('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
+            ' "hashsum":"ac59bb32dac432674dd6e620a6b35ff3"},' +
+            '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
+            ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
+            '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
+            ' "hashsum":"b0c21625a5ef364864191e5907d7afb4"}]}')
 
 class TestCartEndToEnd(unittest.TestCase):
     """
@@ -295,7 +295,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_post_cart_bad_hash(self, cart_id='1136'):
         """test the creation of a cart with bad hash"""
-        cartfile = open('/tmp/cart.json', 'a') 
+        cartfile = open('/tmp/cart.json', 'a')
         cartfile.write('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
                        ' "hashsum":"ac59bb32"},' +
                        '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
