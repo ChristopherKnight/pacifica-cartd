@@ -14,7 +14,7 @@ from cart.cart_utils import Cartutils
 from cart.tasks import get_files_locally, pull_file, stage_files
 
 def cart_json_helper():
-        """Helper that returns a cart json text string"""
+    """Helper that returns a cart json text string"""
     return ('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
             ' "hashsum":"ac59bb32dac432674dd6e620a6b35ff3"},' +
             '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
