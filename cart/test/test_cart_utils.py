@@ -3,11 +3,11 @@ File used to unit test the pacifica_cart
 """
 import unittest
 import os
+import json
 from types import MethodType
 import shutil
 import mock
 import psutil
-import json
 from playhouse.test_utils import test_database
 from peewee import SqliteDatabase
 from cart.cart_orm import Cart, File
@@ -269,12 +269,8 @@ class TestCartUtils(unittest.TestCase):
                                     bundle_path='/tmp/1/')
             cart_utils = Cartutils()
 
-            data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
-                              ' "hashsum":"ac59bb32dac432674dd6e620a6b35ff3"},' +
-                              '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
-                              ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
-                              '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
-                              ' "hashsum":"b0c21625a5ef364864191e5907d7afb4"}]}')
+            data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5"}]}')
+
             file_ids = data['fileids']
             retval = cart_utils.update_cart_files(test_cart, file_ids)
             self.assertNotEqual(retval, None)

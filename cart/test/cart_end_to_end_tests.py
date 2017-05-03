@@ -13,15 +13,7 @@ from cart.cart_orm import Cart, File
 from cart.cart_utils import Cartutils
 from cart.tasks import get_files_locally, pull_file, stage_files
 
-class TestCartEndToEnd(unittest.TestCase):
-    """
-    Contains all the tests for the end to end cart testing
-    """
-    def setUp(self):
-        """Make the tasks not asynchronise for testing"""
-        CART_APP.conf.update(CELERY_ALWAYS_EAGER=True)
-
-    def cart_json_helper(self):
+def cart_json_helper(self):
         """Helper that returns a cart json text string"""
         return ('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
                 ' "hashsum":"ac59bb32dac432674dd6e620a6b35ff3"},' +
@@ -30,10 +22,18 @@ class TestCartEndToEnd(unittest.TestCase):
                 '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
                 ' "hashsum":"b0c21625a5ef364864191e5907d7afb4"}]}')
 
+class TestCartEndToEnd(unittest.TestCase):
+    """
+    Contains all the tests for the end to end cart testing
+    """
+    def setUp(self):
+        """Make the tasks not asynchronise for testing"""
+        CART_APP.conf.update(CELERY_ALWAYS_EAGER=True)
+
     def test_post_cart(self, cart_id='36'):
         """test the creation of a cart"""
         with open('/tmp/cart.json', 'a') as cartfile:
-            cartfile.write(self.cart_json_helper())
+            cartfile.write(cart_json_helper())
 
         session = requests.Session()
         retries = Retry(total=5, backoff_factor=5.0)
@@ -128,7 +128,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_prepare_bundle(self):
         """test getting bundle files ready"""
-        data = json.loads(self.cart_json_helper())
+        data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=117, status='staging')
@@ -147,7 +147,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_prep_bundle_error(self):
         """test getting bundle ready with a file in error state"""
-        data = json.loads(self.cart_json_helper())
+        data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=343, status='staging')
@@ -169,7 +169,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_prep_bundle_staging(self):
         """test getting bundle ready with a file in staging state"""
-        data = json.loads(self.cart_json_helper())
+        data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=343, status='staging')
@@ -208,7 +208,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_cart_deleted_date(self):
         """test getting bundle ready with a file in staging state"""
-        data = json.loads(self.cart_json_helper())
+        data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=444, status='staging')
@@ -276,7 +276,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_stage_files(self):
         """test getting bundle files ready"""
-        data = json.loads(self.cart_json_helper())
+        data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=747, status='staging')
@@ -295,13 +295,14 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_post_cart_bad_hash(self, cart_id='1136'):
         """test the creation of a cart with bad hash"""
-        with open('/tmp/cart.json', 'a') as cartfile:
-            cartfile.write('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
-                           ' "hashsum":"ac59bb32"},' +
-                           '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
-                           ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
-                           '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
-                           ' "hashsum":"b0c21625a5ef364864191e5907d7afb4"}]}')
+        cartfile = open('/tmp/cart.json', 'a') 
+        cartfile.write('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
+                       ' "hashsum":"ac59bb32"},' +
+                       '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
+                       ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
+                       '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
+                       ' "hashsum":"b0c21625a5ef364864191e5907d7afb4"}]}')
+        cartfile.close()
 
         session = requests.Session()
         retries = Retry(total=5, backoff_factor=5.0)
@@ -315,7 +316,6 @@ class TestCartEndToEnd(unittest.TestCase):
         while True:
             resp = session.head('http://127.0.0.1:8081/' + cart_id)
             resp_status = resp.headers['X-Pacifica-Status']
-            resp_message = resp.headers['X-Pacifica-Message']
             resp_code = resp.status_code
             if resp_code == 204 and resp_status != 'staging':
                 break
