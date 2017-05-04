@@ -132,6 +132,7 @@ def pull_file(file_id, filepath, modtime, record_error):
     try:
         archive_request.pull_file(cart_file.file_name, filepath, cart_file.hash_value, cart_file.hash_type)
         cart_utils.set_file_status(cart_file, mycart, 'staged', False)
+        os.utime(filepath, (int(float(modtime)), int(float(modtime))))
         Cart.database_close()
     except requests.exceptions.RequestException as ex:
         #if request fails...try a second time, if that fails write error
@@ -151,5 +152,4 @@ def pull_file(file_id, filepath, modtime, record_error):
         Cart.database_close()
         cart_utils.prepare_bundle(mycart.id)
 
-    os.utime(filepath, (int(float(modtime)), int(float(modtime))))
     cart_utils.prepare_bundle(mycart.id)

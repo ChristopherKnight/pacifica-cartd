@@ -278,7 +278,7 @@ class TestCartTasks(unittest.TestCase):
             cart.cart_orm.CartBase.throw_error = False
             mock_pull.side_effect = ValueError('Error with hash pulling file')
             file_id = test_file.id
-            pull_file(file_id, 'tmp/1/1.txt', '9999999', False)
+            pull_file(file_id, '/tmp/1/1.txt', '9999999', False)
             cart_after = Cart.get(Cart.id == test_cart.id)
             status = cart_after.status
             self.assertEqual(status, 'error')
