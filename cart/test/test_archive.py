@@ -96,3 +96,19 @@ class TestArchiveRequests(unittest.TestCase):
         archreq = ArchiveRequests()
         with self.assertRaises(requests.exceptions.RequestException):
             archreq.stage_file('fakeFileName')
+
+    @httpretty.activate
+    def test_archive_get_bad_hash(self):
+        """
+        Test pulling a file with a bad hash value
+        """
+        response_body = "This is the body of the file in the archive."
+        httpretty.register_uri(httpretty.GET, '%s/1'%(self.endpoint_url),
+                               body=response_body,
+                               content_type='application/octet-stream')
+        temp_dir = mkdtemp()
+        archreq = ArchiveRequests()
+        hashval = '5b'
+        hashtype = 'md5'
+        with self.assertRaises(ValueError):
+            archreq.pull_file('1', '%s/1'%(temp_dir), hashval, hashtype)

@@ -317,7 +317,7 @@ class TestCartEndToEnd(unittest.TestCase):
             resp = session.head('http://127.0.0.1:8081/' + cart_id)
             resp_status = resp.headers['X-Pacifica-Status']
             resp_code = resp.status_code
-            if resp_code == 204 and resp_status != 'staging':
+            if resp_code == 204 and resp_status != 'staging': # pragma: no cover
                 break
             if resp_code == 500:
                 break

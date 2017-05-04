@@ -9,7 +9,7 @@ import requests
 from playhouse.test_utils import test_database
 from peewee import SqliteDatabase
 from cart.cart_orm import Cart, File
-from cart.tasks import stage_file_task, status_file_task
+from cart.tasks import stage_file_task, status_file_task, stage_files, stage_file_task, status_file_task, pull_file
 from cart.archive_requests import ArchiveRequests
 from cart.cart_utils import Cartutils
 import cart.cart_orm
@@ -177,3 +177,108 @@ class TestCartTasks(unittest.TestCase):
             cart_file = File.get(File.id == file_id)
             status = cart_file.status
             self.assertEqual(status, 'staging')
+
+    @mock.patch.object(Cartutils, 'update_cart_files')
+    def test_bad_file_ids(self, mock_update):
+        """test a error return from a file not ready to pull"""
+        with test_database(SqliteDatabase(':memory:'), (Cart, File)):
+            test_cart = Cart.create(cart_uid='1', status='staging')
+            test_file = File.create(cart=test_cart, file_name='1.txt',
+                                    bundle_path='/tmp/1/1.txt')
+            def fake_database_connect(cls):
+                """dont error with connect"""
+                return cls
+
+            def fake_database_close(cls):
+                """dont actually close"""
+                return cls
+            cart.cart_orm.CartBase.database_connect = MethodType(fake_database_connect, cart.cart_orm.CartBase)
+            cart.cart_orm.CartBase.database_close = MethodType(fake_database_close, cart.cart_orm.CartBase)
+            cart.cart_orm.CartBase.throw_error = False
+            mock_update.return_value = 'I am a error'
+            file_id = test_file.id
+            stage_files(file_id, test_cart.id)
+            cart_after = Cart.get(Cart.id == test_cart.id)
+            status = cart_after.status
+            self.assertEqual(status, 'error')
+
+    def test_stage_bad_file_id(self):
+        """test a error return from a file not ready to pull"""
+        with test_database(SqliteDatabase(':memory:'), (Cart, File)):
+            def fake_database_connect(cls):
+                """dont error with connect"""
+                return cls
+
+            def fake_database_close(cls):
+                """dont actually close"""
+                return cls
+            cart.cart_orm.CartBase.database_connect = MethodType(fake_database_connect, cart.cart_orm.CartBase)
+            cart.cart_orm.CartBase.database_close = MethodType(fake_database_close, cart.cart_orm.CartBase)
+            cart.cart_orm.CartBase.throw_error = False
+            file_id = 9999999
+            retVal = stage_file_task(file_id)
+            self.assertEqual(retVal, None)
+
+    def test_stage_cart_deleted(self):
+        """test a error return from a file not ready to pull"""
+        with test_database(SqliteDatabase(':memory:'), (Cart, File)):
+            test_cart = Cart.create(cart_uid='1', status='staging', deleted_date='2017-05-03 00:00:00')
+            test_file = File.create(cart=test_cart, file_name='1.txt',
+                                    bundle_path='/tmp/1/1.txt')
+            def fake_database_connect(cls):
+                """dont error with connect"""
+                return cls
+
+            def fake_database_close(cls):
+                """dont actually close"""
+                return cls
+            cart.cart_orm.CartBase.database_connect = MethodType(fake_database_connect, cart.cart_orm.CartBase)
+            cart.cart_orm.CartBase.database_close = MethodType(fake_database_close, cart.cart_orm.CartBase)
+            cart.cart_orm.CartBase.throw_error = False
+            file_id = test_file.id
+            retVal = stage_file_task(file_id)
+            self.assertEqual(retVal, None)
+
+    def test_status_cart_deleted(self):
+        """test a error return from a file not ready to pull"""
+        with test_database(SqliteDatabase(':memory:'), (Cart, File)):
+            test_cart = Cart.create(cart_uid='1', status='staging', deleted_date='2017-05-03 00:00:00')
+            test_file = File.create(cart=test_cart, file_name='1.txt',
+                                    bundle_path='/tmp/1/1.txt')
+            def fake_database_connect(cls):
+                """dont error with connect"""
+                return cls
+
+            def fake_database_close(cls):
+                """dont actually close"""
+                return cls
+            cart.cart_orm.CartBase.database_connect = MethodType(fake_database_connect, cart.cart_orm.CartBase)
+            cart.cart_orm.CartBase.database_close = MethodType(fake_database_close, cart.cart_orm.CartBase)
+            cart.cart_orm.CartBase.throw_error = False
+            file_id = test_file.id
+            retVal = status_file_task(file_id)
+            self.assertEqual(retVal, None)
+
+    @mock.patch.object(ArchiveRequests, 'pull_file')
+    def test_bad_file_ids(self, mock_pull):
+        """test a error return from a file not ready to pull"""
+        with test_database(SqliteDatabase(':memory:'), (Cart, File)):
+            test_cart = Cart.create(cart_uid='1', status='staging')
+            test_file = File.create(cart=test_cart, file_name='1.txt',
+                                    bundle_path='/tmp/1/1.txt')
+            def fake_database_connect(cls):
+                """dont error with connect"""
+                return cls
+
+            def fake_database_close(cls):
+                """dont actually close"""
+                return cls
+            cart.cart_orm.CartBase.database_connect = MethodType(fake_database_connect, cart.cart_orm.CartBase)
+            cart.cart_orm.CartBase.database_close = MethodType(fake_database_close, cart.cart_orm.CartBase)
+            cart.cart_orm.CartBase.throw_error = False
+            mock_pull.side_effect = ValueError('Error with hash pulling file')
+            file_id = test_file.id
+            pull_file(file_id, 'tmp/1/1.txt', '9999999', False)
+            cart_after = Cart.get(Cart.id == test_cart.id)
+            status = cart_after.status
+            self.assertEqual(status, 'error')
