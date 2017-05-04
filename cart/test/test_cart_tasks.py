@@ -9,7 +9,7 @@ import requests
 from playhouse.test_utils import test_database
 from peewee import SqliteDatabase
 from cart.cart_orm import Cart, File
-from cart.tasks import stage_file_task, status_file_task, stage_files, stage_file_task, status_file_task, pull_file
+from cart.tasks import stage_file_task, stage_files, status_file_task, pull_file
 from cart.archive_requests import ArchiveRequests
 from cart.cart_utils import Cartutils
 import cart.cart_orm
@@ -216,8 +216,8 @@ class TestCartTasks(unittest.TestCase):
             cart.cart_orm.CartBase.database_close = MethodType(fake_database_close, cart.cart_orm.CartBase)
             cart.cart_orm.CartBase.throw_error = False
             file_id = 9999999
-            retVal = stage_file_task(file_id)
-            self.assertEqual(retVal, None)
+            stage_file_task(file_id)
+            self.assertEqual(True, True)
 
     def test_stage_cart_deleted(self):
         """test a error return from a file not ready to pull"""
@@ -236,8 +236,8 @@ class TestCartTasks(unittest.TestCase):
             cart.cart_orm.CartBase.database_close = MethodType(fake_database_close, cart.cart_orm.CartBase)
             cart.cart_orm.CartBase.throw_error = False
             file_id = test_file.id
-            retVal = stage_file_task(file_id)
-            self.assertEqual(retVal, None)
+            stage_file_task(file_id)
+            self.assertEqual(True, True)
 
     def test_status_cart_deleted(self):
         """test a error return from a file not ready to pull"""
@@ -256,11 +256,11 @@ class TestCartTasks(unittest.TestCase):
             cart.cart_orm.CartBase.database_close = MethodType(fake_database_close, cart.cart_orm.CartBase)
             cart.cart_orm.CartBase.throw_error = False
             file_id = test_file.id
-            retVal = status_file_task(file_id)
-            self.assertEqual(retVal, None)
+            status_file_task(file_id)
+            self.assertEqual(True, True)
 
     @mock.patch.object(ArchiveRequests, 'pull_file')
-    def test_bad_file_ids(self, mock_pull):
+    def test_bad_pull_value(self, mock_pull):
         """test a error return from a file not ready to pull"""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
             test_cart = Cart.create(cart_uid='1', status='staging')
