@@ -59,6 +59,7 @@ def stage_file_task(file_id):
         cart_utils.set_file_status(cart_file, mycart, 'staging', False)
         #make sure cart wasnt deleted before pulling file
         if mycart.deleted_date:
+            Cart.database_close()
             return
     except DoesNotExist:
         Cart.database_close()
@@ -85,6 +86,7 @@ def status_file_task(file_id):
     cart_utils = Cartutils()
     #make sure cart wasnt deleted before pulling file
     if mycart.deleted_date:
+        Cart.database_close()
         return
 
     #check to see if file is available to pull from archive interface
@@ -123,6 +125,7 @@ def pull_file(file_id, filepath, modtime, record_error):
         cart_utils = Cartutils()
         #make sure cart wasnt deleted before pulling file
         if mycart.deleted_date:
+            Cart.database_close()
             return
     except DoesNotExist:
         Cart.database_close()
