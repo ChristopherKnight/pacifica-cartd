@@ -229,7 +229,7 @@ class TestCartTasks(unittest.TestCase):
                 """dont error with connect"""
                 return cls
 
-            def fake_database_close(cls):
+            def fake_database_close(cls): # pragma: no cover
                 """dont actually close"""
                 return cls
             cart.cart_orm.CartBase.database_connect = MethodType(fake_database_connect, cart.cart_orm.CartBase)
